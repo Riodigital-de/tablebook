@@ -17,7 +17,7 @@ func NewTable(name string, headers []string) *Table {
 
 // Width returns the number of columns in the Table.
 func (t *Table) Width() int {
-	return len(t.headers)
+	return len(t.Headers())
 }
 
 // Width returns the number of rows in the Table.
@@ -35,6 +35,16 @@ func (t *Table) AppendRow(row []interface{}) error {
 	t.rows = append(t.rows, row)
 
 	return nil
+}
+
+// Rows return rows
+func (t *Table) Rows() [][]interface{} {
+	return t.rows
+}
+
+// Headers return headers
+func (t *Table) Headers() []string {
+	return t.headers
 }
 
 // Column returns all the values for a specific column
@@ -61,9 +71,9 @@ func (t *Table) RenameHeader(from, to string) error {
 
 	var found int
 
-	for i, h := range t.headers {
+	for i, h := range t.Headers() {
 		if h == from {
-			t.headers[i] = to
+			t.Headers()[i] = to
 			found++
 		}
 	}
@@ -78,23 +88,34 @@ func (t *Table) RenameHeader(from, to string) error {
 // Take joins given tables into current table on a row level.
 func (t *Table) Take(tables []*Table) {
 
-	for _, table := range tables {
-		var row []interface{}
-		for _, header := range t.headers {
-			values, _ := table.Column(header)
+	for _, foreignTable := range tables {
+		for _, foreignTableRow := range foreignTable.Rows() {
+			var row []interface{}
 
-			for _, col := range values {
-				row = append(row, col)
+			for _, header := range t.Headers() {
+				var value interface{} = ""
+
+				requiredIndex := foreignTable.columnIndex(header)
+
+				if requiredIndex != -1 {
+					value = foreignTableRow[requiredIndex]
+				}
+
+				row = append(row, value)
 			}
+
+			t.rows = append(t.rows, row)
+
 		}
-		t.rows = append(t.rows, row)
 	}
+
+
 }
 
 // columnIndex returns index of given column
 // returns -1 if column is not found.
 func (t *Table) columnIndex(column string) int {
-	for i, e := range t.headers {
+	for i, e := range t.Headers() {
 		if e == column {
 			return i
 		}

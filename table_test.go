@@ -56,34 +56,50 @@ func TestTable(t *testing.T) {
 			So(err, ShouldEqual, ErrNotFound)
 		})
 
+		Convey("It can get rows", func() {
+			table.AppendRow([]interface{}{1, 2, 3})
+			table.AppendRow([]interface{}{4, 5, 6})
+			table.AppendRow([]interface{}{7, 8, 9})
+
+			So(len(table.Rows()), ShouldEqual, 3)
+		})
+
+		Convey("It can get headers", func() {
+			So(table.Headers(), ShouldResemble, []string{"foo", "bar", "baz"})
+		})
+
 		Convey("It can take columns from other tables and merge it into own columns", func() {
 			targetTable := NewTable("targetTable", []string{"foo", "baz"})
-			targetTable.AppendRow([]interface{}{"foo targetTable", "baz targetTable"})
+			targetTable.AppendRow([]interface{}{"foo 1 targetTable", "baz 1 targetTable"})
 
 			foreignTable1 := NewTable("foreignTable1", []string{"foo", "bar", "baz"})
-			foreignTable1.AppendRow([]interface{}{"foo foreignTable1", "bar foreignTable1", "baz foreignTable1"})
+			foreignTable1.AppendRow([]interface{}{"foo 1 foreignTable1", "bar 1 foreignTable1", "baz 1 foreignTable1"})
+			foreignTable1.AppendRow([]interface{}{"foo 2 foreignTable1", "bar 2 foreignTable1", "baz 2 foreignTable1"})
 
-			foreignTable2 := NewTable("foreignTable2", []string{"baz", "bar", "foo"})
-			foreignTable2.AppendRow([]interface{}{"baz foreignTable2", "bar foreignTable2", "foo foreignTable2"})
+			foreignTable2 := NewTable("foreignTable2", []string{"bar", "foo"})
+			foreignTable2.AppendRow([]interface{}{"bar 1 foreignTable2", "foo 1 foreignTable2"})
+			foreignTable2.AppendRow([]interface{}{"bar 2 foreignTable2", "foo 2 foreignTable2"})
 
 			targetTable.Take([]*Table{foreignTable1, foreignTable2})
 
+			So(len(targetTable.Rows()), ShouldEqual, 5)
+
 			//it is the first row we added to the table... no taking
-			So(targetTable.rows[0], ShouldResemble, []interface{}{"foo targetTable", "baz targetTable"})
+			So(targetTable.rows[0], ShouldResemble, []interface{}{"foo 1 targetTable", "baz 1 targetTable"})
 
 			//it is the second row and it takes reflect foreignTable1 rows expect bar
-			So(targetTable.rows[1], ShouldResemble, []interface{}{"foo foreignTable1", "baz foreignTable1"})
+			So(targetTable.rows[1], ShouldResemble, []interface{}{"foo 1 foreignTable1", "baz 1 foreignTable1"})
 
 			//it is the second row and it takes reflect foreignTable2 rows expect bar
-			So(targetTable.rows[2], ShouldResemble, []interface{}{"foo foreignTable2", "baz foreignTable2"})
+			So(targetTable.rows[3], ShouldResemble, []interface{}{"foo 1 foreignTable2", ""})
 
 			//it shows the first column (foo) and is composed of targetTable, foreignTable1, foreignTable2
 			colFoo, _ := targetTable.Column("foo")
-			So(colFoo, ShouldResemble, []interface{}{"foo targetTable", "foo foreignTable1", "foo foreignTable2"})
+			So(colFoo, ShouldResemble, []interface{}{"foo 1 targetTable", "foo 1 foreignTable1", "foo 2 foreignTable1", "foo 1 foreignTable2", "foo 2 foreignTable2"})
 
 			//it shows the second and final column (baz) and is composed of targetTable, foreignTable1, foreignTable2
 			colBaz, _ := targetTable.Column("baz")
-			So(colBaz, ShouldResemble, []interface{}{"baz targetTable", "baz foreignTable1", "baz foreignTable2"})
+			So(colBaz, ShouldResemble, []interface{}{"baz 1 targetTable", "baz 1 foreignTable1", "baz 2 foreignTable1", "", ""})
 		})
 	})
 }

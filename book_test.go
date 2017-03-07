@@ -26,6 +26,7 @@ func TestBook(t *testing.T) {
 			So(book.Table("table2"), ShouldResemble, table2)
 			So(book.Table("tableunknown"), ShouldBeNil)
 		})
+
 		Convey("It can return tables", func() {
 			table1, _ := book.NewTable("table1", []string{"foo", "bar", "baz"})
 			table2, _ := book.NewTable("table2", []string{"foo", "bar", "baz"})
