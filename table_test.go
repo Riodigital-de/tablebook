@@ -2,7 +2,6 @@ package tablebook
 
 import (
 	"testing"
-
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -17,7 +16,7 @@ func TestTable(t *testing.T) {
 			// not enough columns
 			So(table.AppendRow([]interface{}{1}), ShouldEqual, ErrInvalidDimensions)
 
-			//ok
+			// ok
 			So(table.AppendRow([]interface{}{1, "foo", 2}), ShouldBeNil)
 		})
 
@@ -30,30 +29,16 @@ func TestTable(t *testing.T) {
 		})
 
 		Convey("It can rename headers", func() {
-			//rename one
+			// rename one
 			So(table.RenameHeader("foo", "bar"), ShouldBeNil)
-			So(table.headers, ShouldResemble, []string{"bar", "bar", "baz"})
+			So(table.Headers(), ShouldResemble, []string{"bar", "bar", "baz"})
 
-			//rename multiple
+			// rename multiple
 			So(table.RenameHeader("bar", "foo"), ShouldBeNil)
-			So(table.headers, ShouldResemble, []string{"foo", "foo", "baz"})
+			So(table.Headers(), ShouldResemble, []string{"foo", "foo", "baz"})
 
-			//unknown header
+			// unknown header
 			So(table.RenameHeader("unknown", "baz"), ShouldEqual, ErrNotFound)
-		})
-
-		Convey("It can get columns", func() {
-			table.AppendRow([]interface{}{1, 2, 3})
-			table.AppendRow([]interface{}{4, 5, 6})
-			table.AppendRow([]interface{}{7, 8, 9})
-
-			//ok
-			ok, _ := table.Column("foo")
-			So(ok, ShouldResemble, []interface{}{1, 4, 7})
-
-			//unknown header
-			_, err := table.Column("unknown")
-			So(err, ShouldEqual, ErrNotFound)
 		})
 
 		Convey("It can get rows", func() {
@@ -84,22 +69,30 @@ func TestTable(t *testing.T) {
 
 			So(len(targetTable.Rows()), ShouldEqual, 5)
 
-			//it is the first row we added to the table... no taking
-			So(targetTable.rows[0], ShouldResemble, []interface{}{"foo 1 targetTable", "baz 1 targetTable"})
+			// no foreign merge
+			So(targetTable.Rows()[0], ShouldResemble, []interface{}{"foo 1 targetTable", "baz 1 targetTable"})
 
-			//it is the second row and it takes reflect foreignTable1 rows expect bar
-			So(targetTable.rows[1], ShouldResemble, []interface{}{"foo 1 foreignTable1", "baz 1 foreignTable1"})
+			// merge foo, baz from foreignTable1
+			So(targetTable.Rows()[1], ShouldResemble, []interface{}{"foo 1 foreignTable1", "baz 1 foreignTable1"})
 
-			//it is the second row and it takes reflect foreignTable2 rows expect bar
-			So(targetTable.rows[3], ShouldResemble, []interface{}{"foo 1 foreignTable2", ""})
+			// merge foo, baz from foreignTable2.
+			// foreignTable2 has no baz... it has a empty string as replacement
+			So(targetTable.Rows()[3], ShouldResemble, []interface{}{"foo 1 foreignTable2", ""})
 
-			//it shows the first column (foo) and is composed of targetTable, foreignTable1, foreignTable2
-			colFoo, _ := targetTable.Column("foo")
-			So(colFoo, ShouldResemble, []interface{}{"foo 1 targetTable", "foo 1 foreignTable1", "foo 2 foreignTable1", "foo 1 foreignTable2", "foo 2 foreignTable2"})
+			// shows the first column (foo) and is composed of targetTable, foreignTable1, foreignTable2
+			So(
+				[]interface{}{targetTable.Rows()[0][0], targetTable.Rows()[1][0], targetTable.Rows()[2][0], targetTable.Rows()[3][0], targetTable.Rows()[4][0]},
+				ShouldResemble,
+				[]interface{}{"foo 1 targetTable", "foo 1 foreignTable1", "foo 2 foreignTable1", "foo 1 foreignTable2", "foo 2 foreignTable2"},
+			)
 
-			//it shows the second and final column (baz) and is composed of targetTable, foreignTable1, foreignTable2
-			colBaz, _ := targetTable.Column("baz")
-			So(colBaz, ShouldResemble, []interface{}{"baz 1 targetTable", "baz 1 foreignTable1", "baz 2 foreignTable1", "", ""})
+			// shows the second column (baz) and is composed of targetTable, foreignTable1, foreignTable2.
+			// foreignTable2 has no baz... it has a empty string as replacement
+			So(
+				[]interface{}{targetTable.Rows()[0][1], targetTable.Rows()[1][1], targetTable.Rows()[2][1], targetTable.Rows()[3][1], targetTable.Rows()[4][1]},
+				ShouldResemble,
+				[]interface{}{"baz 1 targetTable", "baz 1 foreignTable1", "baz 2 foreignTable1", "", ""},
+			)
 		})
 	})
 }

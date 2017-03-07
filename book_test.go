@@ -2,7 +2,6 @@ package tablebook
 
 import (
 	"testing"
-
 	. "github.com/smartystreets/goconvey/convey"
 )
 
