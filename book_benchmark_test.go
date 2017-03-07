@@ -1,8 +1,8 @@
 package tablebook
 
 import (
-	"testing"
 	"fmt"
+	"testing"
 )
 
 func BenchmarkBookWithTables(b *testing.B) {
@@ -11,12 +11,12 @@ func BenchmarkBookWithTables(b *testing.B) {
 	book := NewBook()
 	for i := 0; i < b.N; i++ {
 
-		table, _ := book.NewTable(fmt.Sprintf("table-%s", i), []string{"foo", "bar", "baz"})
+		table, _ := book.NewTable(fmt.Sprintf("table-%d", i), []string{"foo", "bar", "baz"})
 
 		table.AppendRow([]interface{}{
-			fmt.Sprintf("baz %s table %s", i),
-			fmt.Sprintf("bar %s table %s", i),
-			fmt.Sprintf("baz %s table %s", i),
+			fmt.Sprintf("baz %d table", i),
+			fmt.Sprintf("bar %d table", i),
+			fmt.Sprintf("baz %d table", i),
 		})
 
 	}

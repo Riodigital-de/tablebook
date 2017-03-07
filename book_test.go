@@ -1,8 +1,8 @@
 package tablebook
 
 import (
-	"testing"
 	. "github.com/smartystreets/goconvey/convey"
+	"testing"
 )
 
 func TestBook(t *testing.T) {
