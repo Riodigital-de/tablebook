@@ -9,5 +9,5 @@ var ErrInvalidDimensions = errors.New("tablebook: Invalid dimension")
 // ErrNotFound is returned when trying to acces a uknown ro or column.
 var ErrNotFound = errors.New("tablebook: Not found")
 
-// ErrNotFound is returned when trying to acces a uknown ro or column.
+// ErrTableExists is returned when trying to acces a uknown ro or column.
 var ErrTableExists = errors.New("tablebook: given table already exists")

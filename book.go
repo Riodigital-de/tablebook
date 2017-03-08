@@ -1,5 +1,6 @@
 package tablebook
 
+//Book groups tables
 type Book struct {
 	tables []*Table
 }
