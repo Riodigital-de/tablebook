@@ -21,9 +21,22 @@ func TestBook(t *testing.T) {
 			table1, _ := book.NewTable("table1", []string{"foo", "bar", "baz"})
 			table2, _ := book.NewTable("table2", []string{"foo", "bar", "baz"})
 
-			So(book.Table("table1"), ShouldResemble, table1)
-			So(book.Table("table2"), ShouldResemble, table2)
-			So(book.Table("tableunknown"), ShouldBeNil)
+			t1, err1 := book.Table("table1")
+			t2, err2 := book.Table("table2")
+			t3, err3 := book.Table("tableunknown")
+
+			// ok
+			So(t1, ShouldResemble, table1)
+			So(err1, ShouldBeNil)
+
+			// ok
+			So(t2, ShouldResemble, table2)
+			So(err2, ShouldBeNil)
+
+			// error
+			So(t3, ShouldBeNil)
+			So(err3, ShouldEqual, ErrNotFound)
+
 		})
 
 		Convey("It can return tables", func() {
@@ -44,7 +57,10 @@ func TestBook(t *testing.T) {
 			ok1 := book.AddTable(table1)
 
 			So(ok1, ShouldBeNil)
-			So(book.Table("table1"), ShouldResemble, table1)
+
+			t1, _ := book.Table("table1")
+
+			So(t1, ShouldResemble, table1)
 
 			ok2 := book.AddTable(table1)
 

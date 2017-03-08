@@ -72,7 +72,7 @@ func (t *Table) Take(tables []*Table) {
 
 	for _, foreignTable := range tables {
 
-		for _, foreignTableRow := range foreignTable.Rows() {
+		for _, foreignTableRow := range foreignTable.rows {
 			var row []interface{}
 
 			for _, header := range t.headers {

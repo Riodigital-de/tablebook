@@ -24,14 +24,14 @@ func (b *Book) NewTable(name string, headers []string) (*Table, error) {
 
 // Table searches and returns table by given name
 // returns tablebook.ErrNotFound if the table cannot be found
-func (b *Book) Table(name string) *Table {
+func (b *Book) Table(name string) (*Table, error) {
 	index := b.tableIndex(name)
 
 	if index == -1 {
-		return nil
+		return nil, ErrNotFound
 	}
 
-	return b.tables[index]
+	return b.tables[index], nil
 }
 
 // Tables returns all tables
