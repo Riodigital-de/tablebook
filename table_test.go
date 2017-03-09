@@ -1,13 +1,19 @@
 package tablebook
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
 	"testing"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestTable(t *testing.T) {
 	Convey("Given a empty table", t, func() {
 		table := NewTable("table", []string{"foo", "bar", "baz"})
+
+		Convey("It has a Name", func() {
+			// ok
+			So(table.Name(), ShouldEqual, "table")
+		})
 
 		Convey("It can append rows", func() {
 			// too much columns
@@ -57,9 +63,10 @@ func TestTable(t *testing.T) {
 			targetTable := NewTable("targetTable", []string{"foo", "baz"})
 			targetTable.AppendRow([]interface{}{"foo 1 targetTable", "baz 1 targetTable"})
 
-			foreignTable1 := NewTable("foreignTable1", []string{"foo", "bar", "baz"})
+			foreignTable1 := NewTable("foreignTable1", []string{"foo", "bar", "unknown"})
 			foreignTable1.AppendRow([]interface{}{"foo 1 foreignTable1", "bar 1 foreignTable1", "baz 1 foreignTable1"})
 			foreignTable1.AppendRow([]interface{}{"foo 2 foreignTable1", "bar 2 foreignTable1", "baz 2 foreignTable1"})
+			foreignTable1.RenameHeader("unknown", "baz")
 
 			foreignTable2 := NewTable("foreignTable2", []string{"bar", "foo"})
 			foreignTable2.AppendRow([]interface{}{"bar 1 foreignTable2", "foo 1 foreignTable2"})
@@ -67,32 +74,19 @@ func TestTable(t *testing.T) {
 
 			targetTable.Take([]*Table{foreignTable1, foreignTable2})
 
-			So(len(targetTable.Rows()), ShouldEqual, 5)
-
-			// no foreign merge
-			So(targetTable.Rows()[0], ShouldResemble, []interface{}{"foo 1 targetTable", "baz 1 targetTable"})
-
-			// merge foo, baz from foreignTable1
-			So(targetTable.Rows()[1], ShouldResemble, []interface{}{"foo 1 foreignTable1", "baz 1 foreignTable1"})
-
-			// merge foo, baz from foreignTable2.
-			// foreignTable2 has no baz... it has a empty string as replacement
-			So(targetTable.Rows()[3], ShouldResemble, []interface{}{"foo 1 foreignTable2", ""})
-
-			// shows the first column (foo) and is composed of targetTable, foreignTable1, foreignTable2
+			// ok
 			So(
-				[]interface{}{targetTable.Rows()[0][0], targetTable.Rows()[1][0], targetTable.Rows()[2][0], targetTable.Rows()[3][0], targetTable.Rows()[4][0]},
+				targetTable.Rows(),
 				ShouldResemble,
-				[]interface{}{"foo 1 targetTable", "foo 1 foreignTable1", "foo 2 foreignTable1", "foo 1 foreignTable2", "foo 2 foreignTable2"},
+				[][]interface{}{
+					{"foo 1 targetTable", "baz 1 targetTable"},
+					{"foo 1 foreignTable1", "baz 1 foreignTable1"},
+					{"foo 2 foreignTable1", "baz 2 foreignTable1"},
+					{"foo 1 foreignTable2", ""},
+					{"foo 2 foreignTable2", ""},
+				},
 			)
 
-			// shows the second column (baz) and is composed of targetTable, foreignTable1, foreignTable2.
-			// foreignTable2 has no baz... it has a empty string as replacement
-			So(
-				[]interface{}{targetTable.Rows()[0][1], targetTable.Rows()[1][1], targetTable.Rows()[2][1], targetTable.Rows()[3][1], targetTable.Rows()[4][1]},
-				ShouldResemble,
-				[]interface{}{"baz 1 targetTable", "baz 1 foreignTable1", "baz 2 foreignTable1", "", ""},
-			)
 		})
 	})
 }

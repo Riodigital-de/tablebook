@@ -20,6 +20,11 @@ func (t *Table) Width() int {
 	return len(t.headers)
 }
 
+// Name returns the name
+func (t *Table) Name() string {
+	return t.name
+}
+
 // Height returns the number of rows in the Table.
 func (t *Table) Height() int {
 	return len(t.rows)
@@ -78,12 +83,12 @@ func (t *Table) Take(tables []*Table) {
 			for _, header := range t.headers {
 				var value interface{}
 
+				value = ""
+
 				requiredIndex := foreignTable.columnIndex(header)
 
 				if requiredIndex != -1 {
 					value = foreignTableRow[requiredIndex]
-				} else {
-					value = ""
 				}
 
 				row = append(row, value)

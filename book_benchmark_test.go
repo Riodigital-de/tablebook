@@ -14,7 +14,7 @@ func BenchmarkBookWithTables(b *testing.B) {
 		table, _ := book.NewTable(fmt.Sprintf("table-%d", i), []string{"foo", "bar", "baz"})
 
 		table.AppendRow([]interface{}{
-			fmt.Sprintf("baz %d table", i),
+			fmt.Sprintf("foo %d table", i),
 			fmt.Sprintf("bar %d table", i),
 			fmt.Sprintf("baz %d table", i),
 		})

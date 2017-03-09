@@ -43,7 +43,7 @@ func (b *Book) Tables() []*Table {
 // AddTable adds a existing table to tables
 // returns tablebook.ErrTableExists if the table already exists
 func (b *Book) AddTable(table *Table) error {
-	if b.tableIndex(table.name) != -1 {
+	if b.tableIndex(table.Name()) != -1 {
 		return ErrTableExists
 	}
 
@@ -56,7 +56,7 @@ func (b *Book) AddTable(table *Table) error {
 // returns -1 if table is not found.
 func (b *Book) tableIndex(name string) int {
 	for i, table := range b.tables {
-		if table.name == name {
+		if table.Name() == name {
 			return i
 		}
 	}
