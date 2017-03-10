@@ -11,11 +11,14 @@ func TestBook(t *testing.T) {
 		book := NewBook()
 
 		Convey("It can create tables", func() {
-			_, ok1 := book.NewTable("table", []string{"foo", "bar", "baz"})
-			So(ok1, ShouldBeNil)
+			_, err1 := book.NewTable("table", []string{"foo", "bar", "baz"})
+			So(err1, ShouldBeNil)
 
-			_, ok2 := book.NewTable("table", []string{"foo", "bar", "baz"})
-			So(ok2, ShouldEqual, ErrTableExists)
+			_, err2 := book.NewTable("table", []string{"foo", "bar", "baz"})
+			So(err2, ShouldEqual, ErrTableExists)
+
+			_, err3 := book.NewTable("table_duplicate_columns", []string{"bar", "bar", "baz"})
+			So(err3, ShouldEqual, ErrColumnExists)
 		})
 
 		Convey("It can search tables", func() {
@@ -53,7 +56,7 @@ func TestBook(t *testing.T) {
 		})
 
 		Convey("It can add tables", func() {
-			table1 := NewTable("table1", []string{"foo", "bar", "baz"})
+			table1 , _ := NewTable("table1", []string{"foo", "bar", "baz"})
 
 			ok1 := book.AddTable(table1)
 

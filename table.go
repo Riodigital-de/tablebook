@@ -1,27 +1,39 @@
 package tablebook
 
-// Table represents a single table with headers and rows
+// Table represents a single table with columnNames and rows
 type Table struct {
-	name    string
-	headers []string
-	rows    [][]interface{}
+	name        string
+	columnNames []string
+	rows        [][]interface{}
 }
 
 // DynamicColumn represents a function that can be evaluated dynamically
 // when exporting to a predefined format.
-type DynamicColumn func(*Table, int, int, []interface{}) interface{}
+type DynamicColumn func(table *Table, rowIndex int, cellIndex int) interface{}
 
 // NewTable creates a new Table.
-func NewTable(name string, headers []string) *Table {
+func NewTable(name string, columnNames []string) (*Table, error) {
+
+	uniqueColumnNames := make([]string, len(columnNames))
+
+	for i, cn := range columnNames {
+		for _, ucn := range uniqueColumnNames {
+			if ucn == cn {
+				return nil, ErrColumnExists
+			}
+		}
+		uniqueColumnNames[i] = cn
+	}
+
 	return &Table{
 		name:    name,
-		headers: headers,
-	}
+		columnNames: columnNames,
+	}, nil
 }
 
 // Width returns the number of columns in the Table.
 func (t *Table) Width() int {
-	return len(t.headers)
+	return len(t.columnNames)
 }
 
 // Name returns the name
@@ -34,22 +46,18 @@ func (t *Table) Height() int {
 	return len(t.rows)
 }
 
-// Row return row at given index
+// Row returns row at given index
 // returns tablebook.ErrNotFound if the given row cannot be found
 func (t *Table) Row(index int) ([]interface{}, error) {
 	if index < 0 || index > t.Height() {
-		return nil, ErrNotFound
+		return nil, ErrInvalidDimensions
 	}
 
 	row := make([]interface{}, t.Width())
 
-	for ci, c := range t.rows[index] {
-		switch c.(type) {
-		case DynamicColumn:
-			row[ci] = c.(DynamicColumn)(t, index, ci, t.rows[index])
-		default:
-			row[ci] = c
-		}
+	for ci, _ := range t.rows[index] {
+		cv, _ := t.Cell(index, ci)
+		row[ci] = cv
 
 	}
 
@@ -67,11 +75,6 @@ func (t *Table) Rows() [][]interface{} {
 	}
 
 	return rows
-}
-
-// Headers return headers
-func (t *Table) Headers() []string {
-	return t.headers
 }
 
 // AppendRow appends a row of values to the Dataset.
@@ -99,20 +102,62 @@ func (t *Table) AppendRow(cells []interface{}) error {
 	return nil
 }
 
-// AppendColumn appends a column of values and header to the Dataset.
+// ColumnNames return columnNames
+func (t *Table) ColumnNames() []string {
+	return t.columnNames
+}
+
+// Column returns a column by given columnName.
+// returns tablebook.ErrNotFound if the given columnName cannot be found
+func (t *Table) Column(columnName string) ([]interface{}, error) {
+	index := t.ColumnIndex(columnName)
+
+	if index == -1 {
+		return nil, ErrNotFound
+	}
+
+	column := make([]interface{}, t.Height())
+
+	for i, r := range t.Rows() {
+		column[i] = r[index]
+	}
+
+	return column, nil
+}
+
+// RenameColumn renames columnName from given name to given name
+// returns tablebook.ErrNotFound if the columnName cannot be found
+// returns tablebook.ErrColumnExists if the columnName cannot be found
+func (t *Table) RenameColumn(from, to string) error {
+	if t.ColumnIndex(to) != -1 {
+		return ErrColumnExists
+	}
+
+	index := t.ColumnIndex(from)
+
+	if index == -1 {
+		return ErrNotFound
+	}
+
+	t.columnNames[index] = to
+
+	return nil
+}
+
+// AppendColumn appends a column of values and columnName to the Dataset.
 // returns tablebook.ErrInvalidDimensions if the column is to large
 // returns tablebook.ErrColumnExists if the column already exist
-func (t *Table) AppendColumn(header string, column []interface{}) error {
+func (t *Table) AppendColumn(columnName string, column []interface{}) error {
 
 	if len(column) > t.Height() {
 		return ErrInvalidDimensions
 	}
 
-	if t.columnIndex(header) != -1 {
+	if t.ColumnIndex(columnName) != -1 {
 		return ErrColumnExists
 	}
 
-	t.headers = append(t.headers, header)
+	t.columnNames = append(t.columnNames, columnName)
 
 	for i, r := range t.rows {
 		var value interface{}
@@ -128,14 +173,14 @@ func (t *Table) AppendColumn(header string, column []interface{}) error {
 	return nil
 }
 
-// AppendDynamicColumn appends a column of evaluated functions and header to the Dataset.
+// AppendEvaluatedColumn appends a column of evaluated functions and columnName to the Dataset.
 // returns tablebook.ErrColumnExists if the column already exist
-func (t *Table) AppendDynamicColumn(header string, fn DynamicColumn) error {
-	if t.columnIndex(header) != -1 {
+func (t *Table) AppendEvaluatedColumn(columnName string, fn DynamicColumn) error {
+	if t.ColumnIndex(columnName) != -1 {
 		return ErrColumnExists
 	}
 
-	t.headers = append(t.headers, header)
+	t.columnNames = append(t.columnNames, columnName)
 	for i, r := range t.rows {
 		t.rows[i] = append(r, fn)
 	}
@@ -143,42 +188,22 @@ func (t *Table) AppendDynamicColumn(header string, fn DynamicColumn) error {
 	return nil
 }
 
-// Column returns a column by given header.
-// returns tablebook.ErrNotFound if the given header cannot be found
-func (t *Table) Column(header string) ([]interface{}, error) {
-	index := t.columnIndex(header)
+// Cell return value for cell in given row and column
+// returns tablebook.ErrInvalidDimensions if the given row or cell cannot be found
+func (t *Table) Cell(rowIndex, columnIndex int) (interface{}, error) {
 
-	if index == -1 {
-		return nil, ErrNotFound
+	if rowIndex < 0 || rowIndex > t.Height() || columnIndex < 0 || columnIndex > t.Width() {
+		return nil, ErrInvalidDimensions
 	}
 
-	column := make([]interface{}, t.Height())
+	cell := t.rows[rowIndex][columnIndex]
 
-	for i, r := range t.Rows() {
-		column[i] = r[index]
+	switch cell.(type) {
+	case DynamicColumn:
+		return cell.(DynamicColumn)(t, rowIndex, columnIndex), nil
+	default:
+		return cell, nil
 	}
-
-	return column, nil
-}
-
-// RenameHeader renames header from given name to given name
-// returns tablebook.ErrNotFound if the header cannot be found
-func (t *Table) RenameHeader(from, to string) error {
-
-	var found int
-
-	for i, h := range t.headers {
-		if h == from {
-			t.headers[i] = to
-			found++
-		}
-	}
-
-	if found == 0 {
-		return ErrNotFound
-	}
-
-	return nil
 }
 
 // Take joins given tables into current table on a row level.
@@ -186,17 +211,18 @@ func (t *Table) Take(tables []*Table) {
 
 	for _, foreignTable := range tables {
 
-		for _, foreignTableRow := range foreignTable.rows {
+		for foreignTableRowIndex := range foreignTable.rows {
 			var row []interface{}
 
-			for _, header := range t.headers {
+			for _, columnName := range t.columnNames {
 				var value interface{}
 				value = ""
 
-				requiredIndex := foreignTable.columnIndex(header)
+				requiredIndex := foreignTable.ColumnIndex(columnName)
 
 				if requiredIndex != -1 {
-					value = foreignTableRow[requiredIndex]
+					cv, _ := foreignTable.Cell(foreignTableRowIndex, requiredIndex)
+					value = cv
 				}
 
 				row = append(row, value)
@@ -208,11 +234,11 @@ func (t *Table) Take(tables []*Table) {
 	}
 }
 
-// columnIndex returns index of given column
+// ColumnIndex returns index of given column
 // returns -1 if column is not found.
-func (t *Table) columnIndex(column string) int {
-	for i, header := range t.headers {
-		if header == column {
+func (t *Table) ColumnIndex(columnName string) int {
+	for i, cn := range t.columnNames {
+		if cn == columnName {
 			return i
 		}
 	}

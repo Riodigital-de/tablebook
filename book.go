@@ -12,12 +12,17 @@ func NewBook() *Book {
 
 // NewTable creates a Table, appends it to tables and returns it
 // returns ErrTableExists if table already exist
-func (b *Book) NewTable(name string, headers []string) (*Table, error) {
+func (b *Book) NewTable(name string, columnNames []string) (*Table, error) {
 	if b.tableIndex(name) != -1 {
 		return nil, ErrTableExists
 	}
 
-	table := NewTable(name, headers)
+	table, err := NewTable(name, columnNames)
+
+	if err != nil {
+		return nil, err
+	}
+
 	b.tables = append(b.tables, table)
 
 	return table, nil
