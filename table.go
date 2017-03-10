@@ -55,7 +55,7 @@ func (t *Table) Row(index int) ([]interface{}, error) {
 
 	row := make([]interface{}, t.Width())
 
-	for ci, _ := range t.rows[index] {
+	for ci := range t.rows[index] {
 		cv, _ := t.Cell(index, ci)
 		row[ci] = cv
 
