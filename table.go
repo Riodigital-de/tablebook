@@ -61,11 +61,7 @@ func (t *Table) Rows() [][]interface{} {
 	rows := make([][]interface{}, t.Height())
 
 	for ri := range t.rows {
-		row, err := t.Row(ri)
-
-		if err != nil {
-			continue
-		}
+		row, _ := t.Row(ri)
 
 		rows[ri] = row
 	}
