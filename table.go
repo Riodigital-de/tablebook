@@ -69,7 +69,7 @@ func (t *Table) Rows() [][]interface{} {
 
 		rows[ri] = row
 	}
-	
+
 	return rows
 }
 
