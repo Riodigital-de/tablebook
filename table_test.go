@@ -128,6 +128,19 @@ func TestTable(t *testing.T) {
 			So(table.AppendRow([]interface{}{1, "foo", 2}), ShouldBeNil)
 		})
 
+		Convey("It can return cells", func() {
+			table.AppendRow([]interface{}{1, 2, 3})
+			table.AppendRow([]interface{}{5, 6, 7})
+			table.AppendRow([]interface{}{9, 10, 11})
+
+			// cell out of range
+			_, err1 := table.Cell(100, 100)
+			_, err2 := table.Cell(-100, -100)
+			So(err1, ShouldEqual, ErrInvalidDimensions)
+			So(err2, ShouldEqual, ErrInvalidDimensions)
+
+		})
+
 		Convey("It can append dynamic columns", func() {
 			table.AppendRow([]interface{}{1, 2, 3})
 			table.AppendRow([]interface{}{5, 6, 7})
