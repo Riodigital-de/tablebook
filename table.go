@@ -7,9 +7,9 @@ type Table struct {
 	rows        [][]interface{}
 }
 
-// DynamicColumn represents a function that can be evaluated dynamically
+// EvaluatedColumn represents a function that can be evaluated dynamically
 // when exporting to a predefined format.
-type DynamicColumn func(table *Table, rowIndex int, cellIndex int) interface{}
+type EvaluatedColumn func(table *Table, rowIndex int, cellIndex int) interface{}
 
 // NewTable creates a new Table.
 func NewTable(name string, columnNames []string) (*Table, error) {
@@ -175,7 +175,7 @@ func (t *Table) AppendColumn(columnName string, column []interface{}) error {
 
 // AppendEvaluatedColumn appends a column of evaluated functions and columnName to the Dataset.
 // returns tablebook.ErrColumnExists if the column already exist
-func (t *Table) AppendEvaluatedColumn(columnName string, fn DynamicColumn) error {
+func (t *Table) AppendEvaluatedColumn(columnName string, fn EvaluatedColumn) error {
 	if t.ColumnIndex(columnName) != -1 {
 		return ErrColumnExists
 	}
@@ -186,6 +186,17 @@ func (t *Table) AppendEvaluatedColumn(columnName string, fn DynamicColumn) error
 	}
 
 	return nil
+}
+
+// ColumnIndex returns index of given column
+// returns -1 if column is not found.
+func (t *Table) ColumnIndex(columnName string) int {
+	for i, cn := range t.columnNames {
+		if cn == columnName {
+			return i
+		}
+	}
+	return -1
 }
 
 // Cell return value for cell in given row and column
@@ -199,8 +210,8 @@ func (t *Table) Cell(rowIndex, columnIndex int) (interface{}, error) {
 	cell := t.rows[rowIndex][columnIndex]
 
 	switch cell.(type) {
-	case DynamicColumn:
-		return cell.(DynamicColumn)(t, rowIndex, columnIndex), nil
+	case EvaluatedColumn:
+		return cell.(EvaluatedColumn)(t, rowIndex, columnIndex), nil
 	default:
 		return cell, nil
 	}
@@ -232,15 +243,4 @@ func (t *Table) Take(tables []*Table) {
 
 		}
 	}
-}
-
-// ColumnIndex returns index of given column
-// returns -1 if column is not found.
-func (t *Table) ColumnIndex(columnName string) int {
-	for i, cn := range t.columnNames {
-		if cn == columnName {
-			return i
-		}
-	}
-	return -1
 }
