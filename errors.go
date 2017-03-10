@@ -11,3 +11,6 @@ var ErrNotFound = errors.New("tablebook: Not found")
 
 // ErrTableExists is returned when trying to acces a uknown ro or column.
 var ErrTableExists = errors.New("tablebook: given table already exists")
+
+// ErrColumnExists is returned when trying to acces a uknown ro or column.
+var ErrColumnExists = errors.New("tablebook: given column already exists")
