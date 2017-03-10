@@ -56,7 +56,7 @@ func TestBook(t *testing.T) {
 		})
 
 		Convey("It can add tables", func() {
-			table1 , _ := NewTable("table1", []string{"foo", "bar", "baz"})
+			table1, _ := NewTable("table1", []string{"foo", "bar", "baz"})
 
 			ok1 := book.AddTable(table1)
 

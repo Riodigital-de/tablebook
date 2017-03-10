@@ -26,7 +26,7 @@ func NewTable(name string, columnNames []string) (*Table, error) {
 	}
 
 	return &Table{
-		name:    name,
+		name:        name,
 		columnNames: columnNames,
 	}, nil
 }
