@@ -139,6 +139,12 @@ func TestTable(t *testing.T) {
 			So(err1, ShouldEqual, ErrInvalidDimensions)
 			So(err2, ShouldEqual, ErrInvalidDimensions)
 
+			// ok
+			cell1, _ := table.Cell(0, 0)
+			cell2, _ := table.Cell(2, 2)
+			So(cell1, ShouldEqual, 1)
+			So(cell2, ShouldEqual, 11)
+
 		})
 
 		Convey("It can append dynamic columns", func() {
